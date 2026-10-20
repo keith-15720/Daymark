@@ -1,0 +1,8 @@
+{
+	"name": "my-projects-2026",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "npx --yes http-server . -a 127.0.0.1 -p 8000"
+	}
+}

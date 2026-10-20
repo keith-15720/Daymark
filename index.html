@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1c2d29">
+  <meta name="description" content="A calm, practical task manager for organizing your day.">
+  <title>Task Manager — Your tasks, in focus</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="supabase-config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#" aria-label="Task Manager home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="brand-name">daymark<span>.</span></span>
+      </a>
+
+      <div class="sidebar-label">WORKSPACE</div>
+      <nav class="primary-nav" aria-label="Task views">
+        <button class="nav-link is-active" type="button" data-view="all">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h7v6H4zm9 0h7v6h-7zM4 13.5h7v5H4zm9 0h7v5h-7z"/></svg>
+          <span>All tasks</span><span class="nav-count" id="allNavCount">0</span>
+        </button>
+        <button class="nav-link" type="button" data-view="today">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>
+          <span>Today</span><span class="nav-count" id="todayNavCount">0</span>
+        </button>
+        <button class="nav-link" type="button" data-view="upcoming">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M8 3.5v4m8-4v4M4 10h16m-11 4h2m-2 3h5"/></svg>
+          <span>Upcoming</span>
+        </button>
+        <button class="nav-link" type="button" data-view="completed">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.3 2.5 2.5 5.5-5.6"/></svg>
+          <span>Completed</span><span class="nav-count" id="completedNavCount">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-section-heading">
+        <span class="sidebar-label">YOUR LISTS</span>
+        <button class="icon-button add-list-button" id="addCategoryButton" type="button" aria-label="Create a new list" title="Create a new list">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <nav class="category-nav" id="categoryNav" aria-label="Task lists"></nav>
+
+      <section class="appearance-panel" aria-labelledby="appearanceTitle">
+        <div class="appearance-heading">
+          <span class="sidebar-label" id="appearanceTitle">APPEARANCE</span>
+          <span class="appearance-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1.4-3.4 1.5 1.5 0 0 1 1.1-2.6H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8Z"/><circle cx="7.5" cy="11" r=".8"/><circle cx="10" cy="7.5" r=".8"/><circle cx="14.5" cy="7.5" r=".8"/></svg>
+          </span>
+        </div>
+        <label class="appearance-field" for="themeSelect">
+          <span>Theme</span>
+          <select id="themeSelect">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <label class="appearance-field" for="gradientSelect">
+          <span>Color gradient</span>
+          <select id="gradientSelect">
+            <option value="forest">Forest</option>
+            <option value="ocean">Ocean</option>
+            <option value="sunset">Sunset</option>
+            <option value="lavender">Lavender</option>
+            <option value="rose">Rose</option>
+          </select>
+        </label>
+        <div class="gradient-swatches" aria-hidden="true">
+          <span class="gradient-swatch swatch-forest"></span>
+          <span class="gradient-swatch swatch-ocean"></span>
+          <span class="gradient-swatch swatch-sunset"></span>
+          <span class="gradient-swatch swatch-lavender"></span>
+          <span class="gradient-swatch swatch-rose"></span>
+        </div>
+        <p class="appearance-status" id="appearanceStatus" aria-live="polite"></p>
+      </section>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-note-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 4h12a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M8 9h8M8 13h6"/></svg>
+        </div>
+        <p>Make space for what matters.</p>
+        <span>Your tasks sync to your account.</span>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+    <div class="main-panel">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-button icon-button" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
+          <div class="breadcrumbs"><span>Workspace</span><span class="crumb-divider">/</span><strong>My tasks</strong></div>
+        </div>
+        <div class="topbar-right">
+          <div class="account-control" id="accountControl" hidden>
+            <span class="account-email" id="accountEmail"></span>
+            <button class="button button-quiet account-signout" id="signOutButton" type="button">Sign out</button>
+          </div>
+          <div class="topbar-date" id="todayLabel"></div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow" id="pageEyebrow">A CLEARER KIND OF BUSY</p>
+            <h1 id="pageHeading">Your tasks, in focus.</h1>
+            <p class="page-subtitle">A little progress, thoughtfully organized.</p>
+          </div>
+          <button class="button button-primary" id="newTaskButton" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span>New task</span>
+          </button>
+        </section>
+
+        <section class="progress-card" aria-labelledby="progressTitle">
+          <div class="progress-copy">
+            <span class="progress-kicker"><span class="spark-dot"></span> YOUR MOMENTUM</span>
+            <h2 id="progressTitle">Every small step counts.</h2>
+            <p id="progressText">Add a task and start building a little momentum.</p>
+          </div>
+          <div class="progress-right">
+            <div class="progress-ring" id="progressRing" role="img" aria-label="0 percent complete">
+              <span id="progressPercent">0%</span>
+            </div>
+            <span class="progress-caption">complete</span>
+          </div>
+        </section>
+
+        <section class="stats-row" aria-label="Task overview">
+          <article class="stat-card">
+            <div class="stat-icon stat-icon-green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h9"/><circle cx="3.5" cy="6" r=".5"/><circle cx="3.5" cy="12" r=".5"/><circle cx="3.5" cy="18" r=".5"/></svg></div>
+            <div><span class="stat-label">All tasks</span><strong class="stat-value" id="allTaskStat">0</strong></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon stat-icon-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></div>
+            <div><span class="stat-label">In progress</span><strong class="stat-value" id="activeTaskStat">0</strong></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon stat-icon-blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8 12 2.5 2.5L16 9"/></svg></div>
+            <div><span class="stat-label">Completed</span><strong class="stat-value" id="completedTaskStat">0</strong></div>
+          </article>
+        </section>
+
+        <section class="task-section" aria-labelledby="sectionTitle">
+          <div class="section-heading">
+            <div>
+              <h2 id="sectionTitle">All tasks</h2>
+              <p id="sectionSummary">A good place to begin.</p>
+            </div>
+            <button class="button button-quiet" id="sectionAddButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Add task</span>
+            </button>
+          </div>
+
+          <div class="filter-bar" role="search">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg>
+              <span class="visually-hidden">Search tasks by title or details</span>
+              <input id="searchInput" type="search" placeholder="Search your tasks" autocomplete="off">
+              <kbd>⌘ K</kbd>
+            </label>
+            <label class="filter-control"><span class="visually-hidden">Filter by status</span>
+              <select id="statusFilter"><option value="all">Any status</option><option value="active">Open</option><option value="completed">Completed</option></select>
+            </label>
+            <label class="filter-control"><span class="visually-hidden">Filter by due date</span>
+              <select id="dateFilter"><option value="all">Any due date</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="upcoming">Upcoming</option><option value="none">No due date</option></select>
+            </label>
+            <label class="filter-control"><span class="visually-hidden">Filter by priority</span>
+              <select id="priorityFilter"><option value="all">Any priority</option><option value="high">High priority</option><option value="medium">Medium priority</option><option value="low">Low priority</option></select>
+            </label>
+            <label class="filter-control"><span class="visually-hidden">Filter by list</span>
+              <select id="categoryFilter"><option value="all">All lists</option></select>
+            </label>
+            <label class="filter-control sort-control"><span class="visually-hidden">Sort tasks</span>
+              <select id="sortSelect"><option value="due">Sort: due date</option><option value="priority">Sort: priority</option><option value="status">Sort: status</option><option value="category">Sort: list</option><option value="recent">Sort: newest</option></select>
+            </label>
+          </div>
+
+          <div class="task-list" id="taskList" aria-live="polite"></div>
+          <div class="empty-state" id="emptyState" hidden>
+            <div class="empty-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M13 8h22a4 4 0 0 1 4 4v28H17a4 4 0 0 1-4-4V8Z"/><path d="M8 14v24a6 6 0 0 0 6 6h23M20 19h12M20 25h12M20 31h7"/></svg></div>
+            <h3 id="emptyTitle">A little room to think.</h3>
+            <p id="emptyMessage">Add a first task, then keep it moving one step at a time.</p>
+            <button class="button button-primary" id="emptyAddButton" type="button">Add your first task</button>
+          </div>
+          <div class="section-footnote"><span class="saved-indicator"></span><span>Synced to your account</span><span class="footnote-separator">·</span><span>Private to your account</span></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="auth-gate" id="authGate">
+    <section class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <a class="brand auth-brand" href="#" aria-label="Daymark home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="brand-name">daymark<span>.</span></span>
+      </a>
+      <p class="eyebrow">YOUR TASKS, YOUR SPACE</p>
+      <h1 id="authTitle">Sign in to Daymark</h1>
+      <p class="auth-description" id="authDescription">Your tasks will sync securely with your account.</p>
+      <div class="auth-setup-notice" id="authSetupNotice" hidden>
+        <strong>Connect your Supabase project to get started.</strong>
+        <span>Follow the setup guide, then add your project URL and public key in <code>supabase-config.js</code>.</span>
+      </div>
+      <form id="authForm">
+        <label class="form-field"><span>Email</span><input id="authEmail" name="email" type="email" autocomplete="email" maxlength="254" required></label>
+        <label class="form-field"><span>Password</span><input id="authPassword" name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <p class="auth-status" id="authStatus" role="status" aria-live="polite"></p>
+        <button class="button button-primary auth-submit" id="authSubmitButton" type="submit">Sign in</button>
+      </form>
+      <button class="button button-primary auth-submit" id="retryLoadButton" type="button" hidden>Retry loading tasks</button>
+      <button class="auth-mode-switch" id="authModeButton" type="button">Create an account</button>
+      <a class="auth-setup-link" href="SUPABASE_SETUP.md">Setup guide</a>
+    </section>
+  </div>
+
+  <div class="modal-layer" id="taskModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <div class="modal-heading">
+        <div><p class="eyebrow">MAKE IT ACTIONABLE</p><h2 id="taskModalTitle">New task</h2></div>
+        <button class="icon-button modal-close" type="button" data-close-modal="taskModal" aria-label="Close dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </div>
+      <form id="taskForm">
+        <input type="hidden" id="taskId">
+        <label class="form-field"><span>Task name <em>*</em></span><input id="taskTitle" name="title" type="text" maxlength="120" placeholder="What needs doing?" required></label>
+        <label class="form-field"><span>Details <small>Optional</small></span><textarea id="taskDetails" name="details" rows="3" maxlength="500" placeholder="Add a note or a little context"></textarea></label>
+        <div class="form-grid">
+          <label class="form-field"><span>List</span><select id="taskCategory" name="category"></select></label>
+          <label class="form-field"><span>Priority</span><select id="taskPriority" name="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+        </div>
+        <label class="form-field"><span>Due date <small>Optional</small></span><input id="taskDueDate" name="dueDate" type="date"></label>
+        <div class="modal-actions"><button class="button button-quiet" type="button" data-close-modal="taskModal">Cancel</button><button class="button button-primary" type="submit" id="saveTaskButton">Save task</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-layer" id="categoryModal" hidden>
+    <div class="modal-card modal-card-small" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+      <div class="modal-heading">
+        <div><p class="eyebrow">A PLACE FOR IT</p><h2 id="categoryModalTitle">Create a list</h2></div>
+        <button class="icon-button modal-close" type="button" data-close-modal="categoryModal" aria-label="Close dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </div>
+      <form id="categoryForm">
+        <label class="form-field"><span>List name <em>*</em></span><input id="categoryName" type="text" maxlength="32" placeholder="For example, Home" required></label>
+        <div class="modal-actions"><button class="button button-quiet" type="button" data-close-modal="categoryModal">Cancel</button><button class="button button-primary" type="submit">Create list</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>
